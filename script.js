@@ -69,17 +69,18 @@ function renderWebsites(websites) {
 
             // Password field with obfuscation and toggle visiblity
             credItem.innerHTML = `
-            <div>
-                <div class="col-sm-4">
-                    <i class="fa-regular fa-user"></i>
+            <div class="d-flex justify-content-between">
+                <div class="col-sm-4 d-flex justify-content-center align-items-center">
+                    <i class="fa-regular fa-user fa-4x"></i>
                 </div>
                 <div class="col-sm-4">
-                    <strong>User ID</strong>: ${cred.userId},
-                    <strong>Password</strong>: <span class="password-hidden">*******</span>
-                    <button id="toggle-password" class="btn btn-outline-primary btn-sm"><i class="fa fa-eye"></i></button>
+                    <p class="d-flex"><strong class="d-inline-block me-1">User ID</strong>: ${cred.userId}</p>
+                    <p class="d-flex align-items-center"><strong class="d-inline-block me-1">Password</strong> : <span class="password-hidden">*******</span><button id="toggle-password" class="btn btn-outline-primary btn-sm mx-1"><i class="fa fa-eye"></i></button></p>
+                    <!--strong class="d-block">Password</strong>: <input type="text" value="12345" class="border-none" readonly/-->
+                    
                 </div>                  
-                <div class="col-sm-4">
-                    <button id="editCred" class="btn btn-outline-warning btn-sm  edit-user-cred">Edit User</button>    
+                <div class="col-sm-4 d-flex justify-content-end align-items-center">
+                    <button id="editCred" class="btn btn-outline-warning btn-sm mx-1 edit-user-cred">Edit User</button>    
                     <button id="deleteCred" class="btn btn-outline-danger float-end btn-sm  delete-user-cred">Delete User</button>
                 </div>
             </div>`;
