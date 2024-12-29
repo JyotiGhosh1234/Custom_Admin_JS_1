@@ -54,6 +54,7 @@ function renderWebsites(websites) {
             <button class="btn btn-danger btn-sm delete-website">Delete</button>
             </div>
         `;
+        header.querySelector('.edit-website').onclick = () => handleEditWebsite(url);
 
         const credentialDetails = document.createElement('ul');
         credentialDetails.className = 'list-group mt-2';
@@ -69,14 +70,19 @@ function renderWebsites(websites) {
             // Password field with obfuscation and toggle visiblity
             credItem.innerHTML = `
             <div>
-            <i class="fa-regular fa-user"></i>
-            <strong>User ID</strong>: ${cred.userId},
-            <strong>Password</strong>: <span class="password-hidden">*******</span>
-            <button id="toggle-password" class="btn btn-outline-primary btn-sm"><i class="fa fa-eye"></i></button>   
-            <button id="editCred" class="btn btn-outline-warning btn-sm  edit-user-cred">Edit User</button>    
-            <button id="deleteCred" class="btn btn-outline-danger float-end btn-sm  delete-user-cred">Delete User</button>
+                <div class="col-sm-4">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="col-sm-4">
+                    <strong>User ID</strong>: ${cred.userId},
+                    <strong>Password</strong>: <span class="password-hidden">*******</span>
+                    <button id="toggle-password" class="btn btn-outline-primary btn-sm"><i class="fa fa-eye"></i></button>
+                </div>                  
+                <div class="col-sm-4">
+                    <button id="editCred" class="btn btn-outline-warning btn-sm  edit-user-cred">Edit User</button>    
+                    <button id="deleteCred" class="btn btn-outline-danger float-end btn-sm  delete-user-cred">Delete User</button>
+                </div>
             </div>`;
-
             // Add toggle functionality for password visibility
             const passwordSpan = credItem.querySelector('.password-hidden');
             const togglePasswordBtn = credItem.querySelector('#toggle-password');
@@ -95,9 +101,11 @@ function renderWebsites(websites) {
             // here implement the cred delete option
             const deleteButton = credItem.querySelector('.delete-user-cred');
             deleteButton.onclick = () => handleDeleteCredential(url, index);
-            
+    
             // Here the Edit user feature added.  //////////////     Not implemented right now....
-            // credItem.querySelector(`{#editCred-${index}}`).onclick 
+            const editUserButton = credItem.querySelector('.edit-user-cred');
+            editUserButton.onclick = () => handleEditUser(url, index)
+            
             credentialDetails.appendChild(credItem);
         });
 
@@ -107,7 +115,6 @@ function renderWebsites(websites) {
         addCredentialBtn.onclick = () => openCredentialModal(url);
 
         header.querySelector('.delete-website').onclick = () => handleDeleteWebsite(url);
-        header.querySelector('.edit-website').onclick = () => handleEditWebsite(url); ////////////////////////////////////////////////
 
         websiteItem.appendChild(header);
         websiteItem.appendChild(credentialDetails);
@@ -129,6 +136,18 @@ function setupWebsiteFormHandler() {
     const form = document.getElementById('websiteForm');
     const websiteUrlInput = document.getElementById('websiteUrl');
     const urlValidator = document.getElementById('websiteUrl-alert');
+
+    // This section is implemented because if user input something and somehow hit the ....
+    //   ....reload button then the box hold the inputted data.
+    // Restore website URL input value from sessionStorage on page load
+    if (sessionStorage.getItem('websiteUrl')) {
+        websiteUrlInput.value = sessionStorage.getItem('websiteUrl');
+    }
+
+    // Save website URL input value to sessionStorage while typing
+    websiteUrlInput.addEventListener('input', () => {
+        sessionStorage.setItem('websiteUrl', websiteUrlInput.value);
+    });
 
 
 
@@ -173,6 +192,21 @@ function openCredentialModal(url) {
     const userIdAlert = document.getElementById('userid-alert');
     const passwordAlert = document.getElementById('password-alert')
 
+    // Restore user credentials input value from sessionStorage on page load
+    if (sessionStorage.getItem('userId')) {
+        userIdInput.value = sessionStorage.getItem('userId');
+    }
+    if (sessionStorage.getItem('password')) {
+        passwordInput.value = sessionStorage.getItem('password');
+    }
+
+    // Save website URL input value to sessionStorage while typing
+    userIdInput.addEventListener('input', () => {
+        sessionStorage.setItem('userId', userIdInput.value);
+    });
+    passwordInput.addEventListener('input', () => {
+        sessionStorage.setItem('password', passwordInput.value);
+    });
 
     form.onsubmit = event => {
         event.preventDefault();
@@ -180,6 +214,9 @@ function openCredentialModal(url) {
         const password = passwordInput.value.trim();
 
         let isValid = true;
+        // Clear previous alerts
+        userIdAlert.textContent = '';
+        passwordAlert.textContent = '';
 
         // Validate userID 
         if (!userId) {
@@ -187,7 +224,18 @@ function openCredentialModal(url) {
             userIdAlert.style.display = "block";
             isValid = false;
         } else {
-            userIdAlert.style.display = "none"
+            const websites = getFromLocalStorage();
+            const  credentials = websites[url] || [];
+
+            // Checking for duplicate userID:
+            const isDuplicate = credentials.some(cred => cred.userId === userId);
+            if (isDuplicate) {
+                userIdAlert.innerHTML = "This User ID exists for the website";
+                userIdAlert.style.display = "block";
+                isValid = false;
+            } else {
+                userIdAlert.style.display = "none";
+            }
         }
 
         // Validate Password
@@ -241,14 +289,14 @@ function handleDeleteCredential(url, index) {
 
 // Edit ability implement for the websites urls:
 function handleEditWebsite(url) {
-   // const newUrl = promptI("Edit Website URL:", oldUrl);
+    const newUrl = prompt("Edit Website URL:", url);
     if (newUrl && urlRegex.test(newUrl)) {
         const websites = getFromLocalStorage();
         if (websites[newUrl]) {
             alert("This website URL already exists!");
         } else {
-            websites[newUrl] = websites[oldUrl];
-            delete websites[oldUrl];
+            websites[newUrl] = websites[url];
+            delete websites[url];
             saveToLocalStorage(websites);
             loadWebsitesFromLocalStorage();
         }
@@ -256,17 +304,75 @@ function handleEditWebsite(url) {
         alert("Invalid URL format!")
     }
 }
-//  Edit user functionality implemented here:
-// function handleEditUser(url, index) {
-//     const websites = getFromLocalStorage();
-//     const credential = websites[url][index];
 
-//     // Open modal for input value of the edit element.
-//     const newUserId = prompt('Edit User ID:', credential.userId);
-//     const newPassword = prompt('Edit Password:', credential.password)
 
-// }
+//  Edit user credentials function start from here......
+function handleEditUser(url, index) {
+    const websites = getFromLocalStorage();
+    const credential = websites[url][index];
 
+    // Populate modal fields with current credential values
+    document.getElementById('userId').value = credential.userId;
+    document.getElementById('password').value = decryptPassword(credential.password);
+
+    // Store URL and index in the modal for reference during submission
+    document.getElementById('credentialForm').dataset.url = url;
+    document.getElementById('credentialForm').dataset.index = index;
+
+    // Show the modal ( Target modal class from HTML section and open modal while you want to edit)
+    const credentialModal = new bootstrap.Modal(document.getElementById('credentialModal'));
+    credentialModal.show();
+}
+
+// Handle modal form submission
+function setupCredentialFormHandler() {
+    const credentialForm = document.getElementById('credentialForm');
+    const userIdInput = document.getElementById('userId');
+    const passwordInput = document.getElementById('password');
+    const userIdAlert = document.getElementById('userid-alert');
+    const passwordAlert = document.getElementById('password-alert');
+
+    credentialForm.onsubmit = event => {
+        event.preventDefault();
+
+        let isValid = true;
+        // Clear previous alerts
+        userIdAlert.textContent = '';
+        passwordAlert.textContent = '';
+
+        const userId = userIdInput.value.trim();
+        const password = passwordInput.value.trim();
+        const url = credentialForm.dataset.url;
+        const index = credentialForm.dataset.index;
+
+        if (!userId) {
+            userIdAlert.innerHTML = 'User ID is required.';
+            userIdAlert.style.display = "block";
+            isValid = false;
+        }
+
+        if (!password) {
+            passwordAlert.textContent = 'Password is required.';
+            userIdAlert.style.display = "block";
+            isValid = false;
+        }
+
+        // Update credential in local storage
+        const websites = getFromLocalStorage();
+        const encryptedPassword = encryptPassword(password);
+        websites[url][index] = { userId, password: encryptedPassword };
+
+        saveToLocalStorage(websites);
+        loadWebsitesFromLocalStorage();
+
+        // Close the modal
+        const credentialModal = bootstrap.Modal.getInstance(document.getElementById('credentialModal'));
+        credentialModal.hide();
+    };
+}
+
+// Initialize the form handler
+setupCredentialFormHandler();
 
 
 // Start the app
