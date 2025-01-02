@@ -57,6 +57,7 @@ function renderWebsites(websites) {
         `;
         header.querySelector('.edit-website').onclick = () => handleEditWebsite(url);
         header.querySelector('.duplicate-website').onclick = () => handleDuplicateWebsite(url);
+        header.querySelector('.delete-website').onclick = () => handleDeleteWebsite(url); 
 
         const credentialDetails = document.createElement('ul');
         credentialDetails.className = 'list-group mt-2';
@@ -117,8 +118,6 @@ function renderWebsites(websites) {
         addCredentialBtn.textContent = 'Add Credentials';
         addCredentialBtn.onclick = () => openCredentialModal(url);
 
-        header.querySelector('.delete-website').onclick = () => handleDeleteWebsite(url); // onclick event using arrow function......
-
         websiteItem.appendChild(header);
         websiteItem.appendChild(credentialDetails);
         websiteItem.appendChild(addCredentialBtn);
@@ -126,7 +125,6 @@ function renderWebsites(websites) {
         credentialList.appendChild(websiteItem);
     });
 }
-
 
 // Handle duplication of a website with it's all credentials
 function handleDuplicateWebsite(url) {
@@ -166,8 +164,6 @@ function setupWebsiteFormHandler() {
         sessionStorage.setItem('websiteUrl', websiteUrlInput.value);
     });
 
-
-
     form.onsubmit = event => {
         event.preventDefault();
         const url = websiteUrlInput.value.trim();
@@ -177,14 +173,12 @@ function setupWebsiteFormHandler() {
 
         if (!url) {
             urlValidator.innerHTML = "URL is required";
-           // return
         }
 
         //  Validate URL format
         const websites = getFromLocalStorage();            
         if (!urlRegex.test(url)) {
             urlValidator.innerHTML = "Invalid URL format. Please enter a valid URL.";
-            //return
         }
 
         else if (!websites[url]) {
@@ -224,6 +218,10 @@ function openCredentialModal(url) {
     passwordInput.addEventListener('input', () => {
         sessionStorage.setItem('password', passwordInput.value);
     });
+
+    // Clear previous values and alerts
+    userIdInput.value = '';
+    passwordInput.value = '';
 
     form.onsubmit = event => {
         event.preventDefault();
@@ -292,15 +290,8 @@ function openCredentialModal(url) {
     credentialModal.show();
 }
 
-// Handle deleting a website
-// function handleDeleteWebsite(url) {
-//     const websites = getFromLocalStorage();
-//     console.log(websites)
-//     delete websites[url];
-//     saveToLocalStorage(websites);
-//     loadWebsitesFromLocalStorage();
-// }/
 
+//  Implement the delete website url using sweet alert.
 function handleDeleteWebsite(url) {
     Swal.fire({
         title: 'Are you sure?',
@@ -326,20 +317,7 @@ function handleDeleteWebsite(url) {
     });
 }
 
-
-//   DELETE function each and every crediential
-// function handleDeleteCredential(url, index) {
-//     const websites = getFromLocalStorage();
-//     if (websites[url]) {
-//         websites[url].splice(index, 1); // Remove the credential at the specified index
-//         if (websites[url].length === 0) {
-//             delete websites[url]; // Optionally delete the website if no credentials remain
-//         }
-//         saveToLocalStorage(websites);
-//         loadWebsitesFromLocalStorage(); // Re-render the updated list
-//     }
-// }
-
+//  Implement the delete user credentials using sweet alert.
 function handleDeleteCredential(url, index) {
     Swal.fire({
         title: 'Are you sure?',
@@ -366,32 +344,13 @@ function handleDeleteCredential(url, index) {
 }
 
 
-
-// Edit ability implement for the websites urls:
-// function handleEditWebsite(url) {
-//     const newUrl = prompt("Edit Website URL:", url);
-//     if (newUrl && urlRegex.test(newUrl)) {
-//         const websites = getFromLocalStorage();
-//         if (websites[newUrl]) {
-//             alert("This website URL already exists!");
-//         } else {
-//             websites[newUrl] = websites[url];
-//             delete websites[url];
-//             saveToLocalStorage(websites);
-//             loadWebsitesFromLocalStorage();
-//         }
-//     } else {
-//         alert("Invalid URL format!")
-//     }
-// }
-
 function handleEditWebsite(url) {
     // Access modal and form elements
     const websiteModal = new bootstrap.Modal(document.getElementById("websiteModal"));
     const websiteUrlInput = document.getElementById("websiteUrlInput");
     const websiteFormUp = document.getElementById("websiteFormUp");
-    const websites = getFromLocalStorage(); // Get websites from local storage
     const websiteUpdateAlert = document.getElementById("websiteUrlUp-alert")
+    const websites = getFromLocalStorage(); // Get websites from local storage
 
     // Pre-fill the current URL in the modal's input field
     websiteUrlInput.value = url;
@@ -401,8 +360,8 @@ function handleEditWebsite(url) {
     websiteModal.show();
 
     // Form submission event listener
-    websiteFormUp.onsubmit = function (e) {
-        e.preventDefault(); // Prevent default form submission
+    websiteFormUp.onsubmit = event => {
+        event.preventDefault(); // Prevent default form submission
 
         const newUrl = websiteUrlInput.value.trim();
 
@@ -448,8 +407,6 @@ function handleEditWebsite(url) {
         if (isValid) {
             websiteModal.hide();
         }
-        
-        // websiteFormUp.reset();
     };
 }
 
@@ -528,7 +485,6 @@ function setupCredentialFormHandler() {
 
 // Initialize the form handler
 setupCredentialFormHandler();
-
 
 // Start the app
 init();
