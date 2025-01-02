@@ -79,7 +79,6 @@ function renderWebsites(websites) {
                 <div class="col-sm-4">
                     <p class="d-flex"><strong class="d-inline-block me-1">User ID</strong>: ${cred.userId}</p>
                     <p class="d-flex align-items-center"><strong class="d-inline-block me-1">Password</strong> : <span class="password-hidden">*******</span><button id="toggle-password" class="btn btn-outline-primary btn-sm mx-1"><i class="fa fa-eye"></i></button></p>
-                    <!--strong class="d-block">Password</strong>: <input type="text" value="12345" class="border-none" readonly/-->
                     
                 </div>                  
                 <div class="col-sm-4 d-flex justify-content-end align-items-center">
@@ -114,7 +113,7 @@ function renderWebsites(websites) {
         });
 
         const addCredentialBtn = document.createElement('button');
-        addCredentialBtn.className = 'btn btn-sm btn-success mt-2';
+        addCredentialBtn.className = 'btn btn-sm btn-primary mt-2';
         addCredentialBtn.textContent = 'Add Credentials';
         addCredentialBtn.onclick = () => openCredentialModal(url);
 
@@ -173,12 +172,14 @@ function setupWebsiteFormHandler() {
 
         if (!url) {
             urlValidator.innerHTML = "URL is required";
+            websiteUrlInput.style.borderColor = "red";
         }
 
         //  Validate URL format
         const websites = getFromLocalStorage();            
         if (!urlRegex.test(url)) {
             urlValidator.innerHTML = "Invalid URL format. Please enter a valid URL.";
+            websiteUrlInput.style.borderColor = "red";
         }
 
         else if (!websites[url]) {
@@ -201,7 +202,9 @@ function openCredentialModal(url) {
     const userIdInput = document.getElementById('userId');
     const passwordInput = document.getElementById('password');
     const userIdAlert = document.getElementById('userid-alert');
-    const passwordAlert = document.getElementById('password-alert')
+    const passwordAlert = document.getElementById('password-alert')         
+    const userIDBox = document.getElementById("userId");
+    const passwordBox = document.getElementById('password')
 
     // Restore user credentials input value from sessionStorage on page load
     if (sessionStorage.getItem('userId')) {
@@ -219,9 +222,16 @@ function openCredentialModal(url) {
         sessionStorage.setItem('password', passwordInput.value);
     });
 
-    // Clear previous values and alerts
+    // Clear previous values and alerts and style
     userIdInput.value = '';
     passwordInput.value = '';
+    userIdAlert.value = '';
+    passwordAlert.value = '';
+    userIDBox.style = '';
+    userIdAlert.textContent = '';
+    passwordAlert.textContent = '';
+
+    credentialModal.show();
 
     form.onsubmit = event => {
         event.preventDefault();
@@ -229,12 +239,6 @@ function openCredentialModal(url) {
         const password = passwordInput.value.trim();
 
         let isValid = true;
-        // Clear previous alerts
-        const userIDBox = document.getElementById("userId");
-        const passwordBox = document.getElementById('password')
-        userIdAlert.textContent = '';
-        passwordAlert.textContent = '';
-
         // Validate userID 
         if (!userId) {
             userIdAlert.innerHTML = "User ID is required";
@@ -256,6 +260,7 @@ function openCredentialModal(url) {
             const isDuplicate = credentials.some(cred => cred.userId === userId);
             if (isDuplicate) {
                 userIdAlert.innerHTML = "This User ID exists for the website";
+                userIDBox.style.borderColor = "red";
                 userIdAlert.style.display = "block";
                 isValid = false;
             } else {
@@ -281,13 +286,13 @@ function openCredentialModal(url) {
             saveToLocalStorage(websites);
             loadWebsitesFromLocalStorage();
             // clear input fields and hide the modal
-            userIdAlert.value = '';
-            passwordAlert.value = '';
+            // userIdAlert.value = '';
+            // passwordAlert.value = '';
             credentialModal.hide();
         }
     };
 
-    credentialModal.show();
+    // credentialModal.show();
 }
 
 
@@ -418,27 +423,27 @@ function handleEditUser(url, index) {
     const credential = websites[url][index];
 
     // Populate modal fields with current credential values
-    document.getElementById('userId').value = credential.userId;
-    document.getElementById('password').value = decryptPassword(credential.password);
+    document.getElementById('userIdUp').value = credential.userId;
+    document.getElementById('passwordUp').value = decryptPassword(credential.password);
 
     // Store URL and index in the modal for reference during submission
-    document.getElementById('credentialForm').dataset.url = url;
-    document.getElementById('credentialForm').dataset.index = index;
+    document.getElementById('userUpdateForm').dataset.url = url;
+    document.getElementById('userUpdateForm').dataset.index = index;
 
     // Show the modal ( Target modal class from HTML section and open modal while you want to edit)
-    const credentialModal = new bootstrap.Modal(document.getElementById('credentialModal'));
+    const credentialModal = new bootstrap.Modal(document.getElementById('credentialModalUp'));
     credentialModal.show();
 }
 
 // Handle modal form submission
 function setupCredentialFormHandler() {
-    const credentialForm = document.getElementById('credentialForm');
-    const userIdInput = document.getElementById('userId');
-    const passwordInput = document.getElementById('password');
-    const userIdBox = document.getElementById("userId");
-    const passwordBox = document.getElementById("password");
-    const userIdAlert = document.getElementById('userid-alert');
-    const passwordAlert = document.getElementById('password-alert');
+    const credentialForm = document.getElementById('userUpdateForm');
+    const userIdInput = document.getElementById('userIdUp');
+    const passwordInput = document.getElementById('passwordUp');
+    const userIdBox = document.getElementById("userIdUp");
+    const passwordBox = document.getElementById("passwordUp");
+    const userIdAlert = document.getElementById('useridUp-alert');
+    const passwordAlert = document.getElementById('passwordUp-alert');
 
     credentialForm.onsubmit = event => {
         event.preventDefault();
@@ -476,7 +481,7 @@ function setupCredentialFormHandler() {
         loadWebsitesFromLocalStorage();
 
         // Close the modal
-        const credentialModal = bootstrap.Modal.getInstance(document.getElementById('credentialModal'));
+        const credentialModal = bootstrap.Modal.getInstance(document.getElementById('credentialModalUp'));
         if (isValid) {
             credentialModal.hide();
         }    
